@@ -78,6 +78,7 @@ let
       });
       profunctors       = self.callCabal2nix "profunctors" profunctors-src {};
       mono-traversable  = nixpkgs.haskell.lib.dontCheck super.mono-traversable;
+      hashable          = super.hashable_1_3_1_0;
     } // displays self);
   });
   ihaskellEnv = haskellPackages.ghcWithPackages (self: [ self.ihaskell ] ++ packages self);
