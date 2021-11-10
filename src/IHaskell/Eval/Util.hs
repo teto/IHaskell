@@ -97,6 +97,7 @@ import           CmdLineParser (warnMsg)
 #endif
 
 import           GHC.LanguageExtensions
+import           Debug.Trace
 
 type ExtensionFlag = Extension
 
@@ -245,6 +246,26 @@ setFlags ext = do
 #else
   (flags0, unrecognized, warnings) <- parseDynamicFlags flags (map noLoc ext)
 #endif
+  dflags0 <- getDynFlags
+  -- ext ~ minus_opts in ghc
+  let lopts = map noLoc ext
+  (dflags1, _, _) <- liftIO $ DynFlags.parseDynamicFlagsCmdLine dflags0 lopts
+  must_reload <- GHC.setProgramDynFlags dflags1
+  let dflags2 = hsc_dflags hsc_env
+  when (packageFlagsChanged dflags2 dflags0) $ do
+    when (verbosity dflags2 > 0) $ do
+      -- trace "package flags have changed, resetting and loading new packages..." ()
+      -- delete targets and all eventually defined breakpoints. (#1620)
+      clearAllTargets
+      when must_reload $ do
+        let units = preloadUnits (hsc_units hsc_env)
+        liftIO $ Loader.loadPackages interp hsc_env units
+      -- package flags changed, we can't re-use any of the old context
+      setContextAfterLoad False []
+      -- and copy the package flags to the interactive DynFlags
+      idflags <- GHC.getInteractiveDynFlags
+      GHC.setInteractiveDynFlags
+          idflags{ packageFlags = packageFlags dflags2 }
 
   -- We can't update packages here
   let flags1 = flags0 { packageFlags = packageFlags flags }
