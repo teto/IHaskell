@@ -26,7 +26,6 @@ import           Data.ByteString (ByteString)
 import qualified Data.ByteString.Char8 as Char
 import qualified Data.ByteString.Lazy as LBS
 import           Data.Char
-import           Data.Monoid ((<>))
 import qualified Data.Text.Encoding as Text
 import           System.ZMQ4 as ZMQ4
 import           Text.Read (readMaybe)
