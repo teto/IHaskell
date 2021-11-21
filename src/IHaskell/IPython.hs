@@ -188,6 +188,7 @@ installLabextension = SH.shelly $ do
         SH.</> ("labextensions" :: SH.FilePath)
         SH.</> ("jupyterlab-ihaskell" :: SH.FilePath)
 
+  print $ "Installing kernel in folder: " <> jupyterlabIHaskellDir
   -- Remove the extension directory with extreme prejudice if it already exists
   SH.rm_rf jupyterlabIHaskellDir
   -- Create an empty 'jupyterlab-ihaskell' directory to install our extension in
