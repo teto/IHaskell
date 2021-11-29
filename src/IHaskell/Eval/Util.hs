@@ -65,6 +65,8 @@ import qualified GHC.Utils.Outputable as O
 import qualified GHC.Utils.Ppr as Pretty
 import           GHC.Runtime.Loader
 #else
+-- for interpretPackageEnv
+import           Packages
 import           DynFlags
 import           GhcMonad
 import           HscTypes
@@ -326,6 +328,25 @@ initGhci sandboxPackages = do
   -- We start handling GHC environment files
   originalFlagsNoPackageEnv <- getSessionDynFlags
   originalFlags <- liftIO $ interpretPackageEnv originalFlagsNoPackageEnv
+-- #elif MIN_VERSION_ghc(8,10,0)
+--   -- We start handling GHC environment files
+--   -- ghc 8.10 doesn't expose interpretPackageEnv
+--   originalFlagsNoPackageEnv <- getSessionDynFlags
+-- 
+  -- getEnvVar :: MaybeT IO String
+  -- getEnvVar = do
+  --   mvar <- liftMaybeT $ try $ getEnv "GHC_ENVIRONMENT"
+  --   case mvar of
+  --     Right var -> return var
+  --     Left err  -> if isDoesNotExistError err then mzero
+  --                                               else liftMaybeT $ throwIO err
+  -- Just envfile -> do
+  --let envfile = "bazel-bin/simwork/core-webservice/link-package_env-local"
+  --content <- readFile envfile
+  --compilationProgressMsg dflags ("Loaded package environment from " ++ envfile)
+  --let (_, dflags') = runCmdLine (runEwM (setFlagsFromEnvFile envfile content)) dflags
+  ----
+  --originalFlags <- liftIO $ interpretPackageEnv originalFlagsNoPackageEnv
 #else
   originalFlags <- getSessionDynFlags
 #endif
