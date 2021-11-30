@@ -27,6 +27,7 @@ module IHaskell.Eval.Util (
     ) where
 
 import           IHaskellPrelude
+import           System.Posix.Env
 #if MIN_VERSION_ghc(8,6,0)
 #else
 import qualified Data.ByteString.Char8 as CBS
@@ -91,7 +92,7 @@ import           StringUtils (replace)
 
 #if MIN_VERSION_ghc(9,0,0)
 #elif MIN_VERSION_ghc(8,4,0)
-import           CmdLineParser (warnMsg)
+import           CmdLineParser (warnMsg, runEwM, CmdLineP (runCmdLine))
 #endif
 
 import           GHC.LanguageExtensions
@@ -316,8 +317,11 @@ doc sdoc = do
 -- We also require that the sandbox PackageConf (if any) is passed here
 -- as setSessionDynFlags will read the package database the first time
 -- (and only the first time) it is called.
-initGhci :: GhcMonad m => Maybe String -> m ()
-initGhci sandboxPackages = do
+initGhci :: GhcMonad m => Maybe String 
+  -> Maybe (String, String)
+  -- ^ (filename, content)
+  -> m ()
+initGhci sandboxPackages mbGhcEnv = do
   -- Initialize dyn flags. Start with -XExtendedDefaultRules and -XNoMonomorphismRestriction.
 #if MIN_VERSION_ghc(9,2,0)
   -- We start handling GHC environment files
@@ -328,25 +332,24 @@ initGhci sandboxPackages = do
   -- We start handling GHC environment files
   originalFlagsNoPackageEnv <- getSessionDynFlags
   originalFlags <- liftIO $ interpretPackageEnv originalFlagsNoPackageEnv
--- #elif MIN_VERSION_ghc(8,10,0)
---   -- We start handling GHC environment files
---   -- ghc 8.10 doesn't expose interpretPackageEnv
---   originalFlagsNoPackageEnv <- getSessionDynFlags
--- 
+#elif MIN_VERSION_ghc(8,10,0)
+  -- We start handling GHC environment files
+  -- ghc 8.10 doesn't expose interpretPackageEnv
+  originalFlagsNoPackageEnv <- getSessionDynFlags
+
   -- getEnvVar :: MaybeT IO String
   -- getEnvVar = do
-  --   mvar <- liftMaybeT $ try $ getEnv "GHC_ENVIRONMENT"
-  --   case mvar of
-  --     Right var -> return var
-  --     Left err  -> if isDoesNotExistError err then mzero
-  --                                               else liftMaybeT $ throwIO err
+  -- DynFlags
+  newFlags <- case mbGhcEnv of
+    Nothing -> return []
+    Just (envfile, content) -> do
+      -- compilationProgressMsg dflags ("Loaded package environment from " ++ envfile)
+      let (_, dflags') = runCmdLine (runEwM (setFlagsFromEnvFile envfile content)) originalFlagsNoPackageEnv
+      return dflags'
   -- Just envfile -> do
-  --let envfile = "bazel-bin/simwork/core-webservice/link-package_env-local"
-  --content <- readFile envfile
-  --compilationProgressMsg dflags ("Loaded package environment from " ++ envfile)
-  --let (_, dflags') = runCmdLine (runEwM (setFlagsFromEnvFile envfile content)) dflags
-  ----
-  --originalFlags <- liftIO $ interpretPackageEnv originalFlagsNoPackageEnv
+  -- let envfile = "bazel-bin/simwork/core-webservice/link-package_env-local"
+  --
+  originalFlags <- newFlags
 #else
   originalFlags <- getSessionDynFlags
 #endif

@@ -185,28 +185,38 @@ testEvaluate str = void $ testInterpret $
 -- to be imported, which is not the case during testing. The argument passed to
 -- the action indicates whether the IHaskell library is available.
 interpret :: String -> Bool -> Bool -> (Bool -> Interpreter a) -> IO a
-interpret libdir allowedStdin needsSupportLibraries action = runGhc (Just libdir) $ do
-  -- If we're in a sandbox, add the relevant package database
-  sandboxPackages <- liftIO getSandboxPackageConf
-  initGhci sandboxPackages
-  case ghcVerbosity of
-    Just verb -> do
-      dflags <- getSessionDynFlags
-      void $ setSessionDynFlags $ dflags { verbosity = verb }
-    Nothing -> return ()
+interpret libdir allowedStdin needsSupportLibraries action = do 
+  mGhcEnv <- getEnv "GHC_ENVIRONMENT"
+  newFlags <- case mbGhcEnv of
+    Nothing -> return []
+    Just envfile -> do
+      content <- readFile envfile
+      -- compilationProgressMsg dflags ("Loaded package environment from " ++ envfile)
+      let (_, dflags') = runCmdLine (runEwM (setFlagsFromEnvFile envfile content)) dflags
+      return dflags'
 
-  hasSupportLibraries <- initializeImports needsSupportLibraries
+    runGhc (Just libdir) $ do
+    -- If we're in a sandbox, add the relevant package database
+    sandboxPackages <- liftIO getSandboxPackageConf
+    initGhci sandboxPackages mGhcEnv
+    case ghcVerbosity of
+      Just verb -> do
+        dflags <- getSessionDynFlags
+        void $ setSessionDynFlags $ dflags { verbosity = verb }
+      Nothing -> return ()
 
-  -- Close stdin so it can't be used. Otherwise it'll block the kernel forever.
-  dir <- liftIO getIHaskellDir
-  let cmd = printf "IHaskell.IPython.Stdin.fixStdin \"%s\"" dir
-  when (allowedStdin && hasSupportLibraries) $ void $
-    execStmt cmd execOptions
+    hasSupportLibraries <- initializeImports needsSupportLibraries
 
-  initializeItVariable
+    -- Close stdin so it can't be used. Otherwise it'll block the kernel forever.
+    dir <- liftIO getIHaskellDir
+    let cmd = printf "IHaskell.IPython.Stdin.fixStdin \"%s\"" dir
+    when (allowedStdin && hasSupportLibraries) $ void $
+      execStmt cmd execOptions
 
-  -- Run the rest of the interpreter
-  action hasSupportLibraries
+    initializeItVariable
+
+    -- Run the rest of the interpreter
+    action hasSupportLibraries
 
 #if MIN_VERSION_ghc(9,2,0)
 packageIdString' :: Logger -> DynFlags -> UnitInfo -> IO String
