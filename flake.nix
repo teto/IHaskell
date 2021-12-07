@@ -27,6 +27,7 @@
         import ./release.nix {
           compiler = "ghc${compilerVersionFromHsPkgs hsPkgs}";
           nixpkgs = pkgs;
+          pythonPackages = pkgs.python38Packages;
         };
 
       mkExe = hsPkgs: (mkEnv hsPkgs).ihaskellExe;

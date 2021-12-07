@@ -8,13 +8,6 @@
 }:
 
 let
-  ihaskell-src = nixpkgs.nix-gitignore.gitignoreSource
-    [ "**/*.ipynb" "**/*.nix" "**/*.yaml" "**/*.yml" "**/\.*" "/Dockerfile" "/README.md" "/cabal.project" "/images" "/notebooks" "/requirements.txt" ]
-    ./.;
-  displays = self: builtins.listToAttrs (
-    map
-      (display: { name = "ihaskell-${display}"; value = self.callCabal2nix display "${ihaskell-src}/ihaskell-display/ihaskell-${display}" {}; })
-      [ "aeson" "blaze" "charts" "diagrams" "gnuplot" "graphviz" "hatex" "juicypixels" "magic" "plot" "rlangqq" "static-canvas" "widgets" ]);
   haskellPackages = nixpkgs.haskell.packages."${compiler}".override (old: {
     overrides = nixpkgs.lib.composeExtensions (old.overrides or (_: _: {})) ihaskellOverlay;
   });
@@ -34,10 +27,6 @@ let
 
   # statically linking against haskell libs reduces closure size at the expense
   # of startup/reload time, so we make it configurable
-  ihaskellExe = if staticExecutable
-    then nixpkgs.haskell.lib.justStaticExecutables haskellPackages.ihaskell
-    else nixpkgs.haskell.lib.enableSharedExecutables haskellPackages.ihaskell;
-  ihaskellEnv = haskellPackages.ghcWithPackages packages;
   jupyterlab = nixpkgs.python3.withPackages (ps: [ ps.jupyterlab ] ++ pythonPackages ps);
   ihaskellGhcLibFunc = exe: env: nixpkgs.writeShellScriptBin "ihaskell" ''
     ${exe}/bin/ihaskell -l $(${env}/bin/ghc --print-libdir) "$@"
