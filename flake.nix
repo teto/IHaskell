@@ -18,6 +18,9 @@
 
       pkgs = import nixpkgs {
         inherit system;
+        overlays = [ (final: prev: {
+          python3 = prev.python38;
+        })];
       };
 
       compilerVersionFromHsPkgs = hsPkgs:
