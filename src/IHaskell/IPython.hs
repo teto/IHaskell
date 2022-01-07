@@ -39,6 +39,7 @@ data KernelSpecOptions =
        KernelSpecOptions
          { kernelSpecGhcLibdir :: String           -- ^ GHC libdir.
          , kernelSpecRTSOptions :: [String]        -- ^ Runtime options to use.
+         , kernelSpecVerbose :: Bool                 -- ^ More like ihaskell verbose mode
          , kernelSpecDebug :: Bool                 -- ^ Spew debugging output?
          , kernelSpecCodeMirror :: String          -- ^ CodeMirror mode
          , kernelSpecConfFile :: IO (Maybe String) -- ^ Filename of profile JSON file.
@@ -52,6 +53,7 @@ defaultKernelSpecOptions = KernelSpecOptions
   { kernelSpecGhcLibdir = GHC.Paths.libdir
   , kernelSpecRTSOptions = ["-M3g", "-N2"]  -- Memory cap 3 GiB,
                                             -- multithreading on two processors.
+  , kernelSpecVerbose = False
   , kernelSpecDebug = False
   , kernelSpecCodeMirror = "ihaskell"
   , kernelSpecConfFile = defaultConfFile

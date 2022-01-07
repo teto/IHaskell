@@ -37,6 +37,7 @@ data Argument = ConfFile String     -- ^ A file with commands to load at startup
               | ConvertFromFormat NotebookFormat
               | ConvertToFormat NotebookFormat
               | ConvertLhsStyle (LhsStyle String)
+              | KernelspecInstallVerbose
               | KernelspecInstallPrefix String
               | KernelspecUseStack
               | KernelspecEnvFile FilePath
@@ -137,6 +138,12 @@ confFlag :: Flag Args
 confFlag = flagReq ["conf", "c"] (store ConfFile) "<rc.hs>"
              "File with commands to execute at start; replaces ~/.ihaskell/rc.hs."
 
+verboseFlag :: Flag Args
+verboseFlag = flagNone ["v"] addVerbose "Be more verbose"
+  where
+    addVerbose (Args md prev) = Args md (KernelspecInstallVerbose : prev)
+
+
 installPrefixFlag :: Flag Args
 installPrefixFlag = flagReq ["prefix"] (store KernelspecInstallPrefix) "<install-dir>"
                       "Installation prefix for kernelspec (see Jupyter's --prefix option)"
@@ -153,7 +160,7 @@ store constructor str (Args md prev) = Right $ Args md $ constructor str : prev
 installKernelSpec :: Mode Args
 installKernelSpec =
   mode "install" (Args InstallKernelSpec []) "Install the Jupyter kernelspec." noArgs
-    [ghcLibFlag, ghcRTSFlag, kernelDebugFlag, confFlag, installPrefixFlag, helpFlag, kernelStackFlag, kernelEnvFileFlag]
+    [ghcLibFlag, ghcRTSFlag, verboseFlag, kernelDebugFlag, confFlag, installPrefixFlag, helpFlag, kernelStackFlag, kernelEnvFileFlag]
 
 kernel :: Mode Args
 kernel = mode "kernel" (Args (Kernel Nothing) []) "Invoke the IHaskell kernel." kernelArg
