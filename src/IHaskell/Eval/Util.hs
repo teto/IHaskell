@@ -340,8 +340,8 @@ initGhci sandboxPackages mbGhcEnv = do
   -- getEnvVar :: MaybeT IO String
   -- getEnvVar = do
   -- DynFlags
-  newFlags <- case mbGhcEnv of
-    Nothing -> return []
+  originalFlags <- case mbGhcEnv of
+    Nothing -> return originalFlagsNoPackageEnv
     Just (envfile, content) -> do
       -- compilationProgressMsg dflags ("Loaded package environment from " ++ envfile)
       let (_, dflags') = runCmdLine (runEwM (setFlagsFromEnvFile envfile content)) originalFlagsNoPackageEnv
@@ -349,8 +349,9 @@ initGhci sandboxPackages mbGhcEnv = do
   -- Just envfile -> do
   -- let envfile = "bazel-bin/simwork/core-webservice/link-package_env-local"
   --
-  originalFlags <- newFlags
+  -- originalFlags <- newFlags
 #else
+  -- 
   originalFlags <- getSessionDynFlags
 #endif
   let flag = flip xopt_set

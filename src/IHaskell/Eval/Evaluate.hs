@@ -93,6 +93,7 @@ import           IHaskell.Eval.Lint
 import           GHC.Data.FastString
 #elif MIN_VERSION_ghc(8,2,0)
 import           FastString (unpackFS)
+import CmdLineParser (runCmdLine, runEwM)
 #else
 import           Paths_ihaskell (version)
 import           Data.Version (versionBranch)
@@ -185,20 +186,24 @@ testEvaluate str = void $ testInterpret $
 -- to be imported, which is not the case during testing. The argument passed to
 -- the action indicates whether the IHaskell library is available.
 interpret :: String -> Bool -> Bool -> (Bool -> Interpreter a) -> IO a
-interpret libdir allowedStdin needsSupportLibraries action = do 
-  mGhcEnv <- getEnv "GHC_ENVIRONMENT"
-  newFlags <- case mbGhcEnv of
-    Nothing -> return []
-    Just envfile -> do
-      content <- readFile envfile
-      -- compilationProgressMsg dflags ("Loaded package environment from " ++ envfile)
-      let (_, dflags') = runCmdLine (runEwM (setFlagsFromEnvFile envfile content)) dflags
-      return dflags'
+interpret libdir allowedStdin needsSupportLibraries action = do
+  -- originalFlagsNoPackageEnv <- getSessionDynFlags
 
-    runGhc (Just libdir) $ do
+  mbGhcEnv <- getEnv "GHC_ENVIRONMENT"
+  newFlags <- case mbGhcEnv of
+    [] -> return Nothing
+      -- return originalFlagsNoPackageEnv
+    envfile -> do
+      content <- readFile envfile
+      return $ Just (envfile, content)
+      -- compilationProgressMsg dflags ("Loaded package environment from " ++ envfile)
+      -- let (_, dflags') = runCmdLine (runEwM (setFlagsFromEnvFile envfile content)) originalFlagsNoPackageEnv
+      -- return dflags'
+
+  runGhc (Just libdir) $ do
     -- If we're in a sandbox, add the relevant package database
     sandboxPackages <- liftIO getSandboxPackageConf
-    initGhci sandboxPackages mGhcEnv
+    initGhci sandboxPackages newFlags
     case ghcVerbosity of
       Just verb -> do
         dflags <- getSessionDynFlags
