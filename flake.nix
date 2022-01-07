@@ -45,6 +45,7 @@
             pkgs.haskell.lib.addBuildTools drv (with hsPkgs; [
               cabal-install
               self.inputs.hls.packages.${system}."haskell-language-server-${compilerVersion}"
+              pkgs.jupyter
             ]);
         in (myModifier myIHaskell).envFunc {withHoogle=true;};
 
