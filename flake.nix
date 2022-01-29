@@ -23,9 +23,11 @@
       compilerVersionFromHsPkgs = hsPkgs:
         pkgs.lib.replaceStrings [ "." ] [ "" ] hsPkgs.ghc.version;
 
-      mkEnv = hsPkgs:
-        import ./release.nix {
-          compiler = "ghc${compilerVersionFromHsPkgs hsPkgs}";
+      mkEnv = hsPkgs: let
+        compilerVersion = compilerVersionFromHsPkgs hsPkgs;
+      in
+        import (builtins.trace compilerVersion (./. + "/release-${compilerVersion}.nix")) {
+          compiler = "ghc${compilerVersion}";
           nixpkgs = pkgs;
         };
 
@@ -84,6 +86,10 @@
 
       defaultPackage = self.packages.${system}.ihaskell;
 
-      devShell = self.packages.${system}.ihaskell-dev;
+      devShells = {
+        ihaskell-dev = mkDevShell ghcDefault;
+        ihaskell-8107 = mkDevShell ghc8107;
+        ihaskell-921 = mkDevShell ghc921;
+      };
     });
 }

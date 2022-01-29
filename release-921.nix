@@ -1,8 +1,8 @@
 let
   # https://github.com/NixOS/nixpkgs/pull/144758
   nixpkgs-src = builtins.fetchTarball {
-    url = "https://github.com/NixOS/nixpkgs/tarball/207243f7c9ca642af5c7f6bc0e7dcbd32890b411";
-    sha256 = "099311cml687zm3mi9pqabd5c46nl2ydg2akidfj4a2w59pl39kn";
+    url = "https://github.com/NixOS/nixpkgs/tarball/c473cc8714710179df205b153f4e9fa007107ff9";
+    sha256 = "0q7rnlp1djxc9ikj89c0ifzihl4wfvri3q1bvi75d2wrz844b4lq";
   };
 in
 
@@ -23,8 +23,8 @@ let
     map
       (display: { name = "ihaskell-${display}"; value = self.callCabal2nix display "${ihaskell-src}/ihaskell-display/ihaskell-${display}" {}; })
       [ "aeson" "blaze" "charts" "diagrams" "gnuplot" "graphviz" "hatex" "juicypixels" "magic" "plot" "rlangqq" "static-canvas" "widgets" ]);
-  haskellPackages = nixpkgs.haskell.packages."${compiler}".override (old: {
-    overrides = nixpkgs.lib.composeExtensions (old.overrides or (_: _: {})) (self: super: {
+
+    ihaskellOverlay = nixpkgs.lib.composeExtensions (old.overrides or (_: _: {})) (self: super: {
       ihaskell          = (nixpkgs.haskell.lib.overrideCabal (
                           self.callCabal2nix "ihaskell" ihaskell-src {}) (_drv: {
         preCheck = ''
@@ -41,6 +41,7 @@ let
 
       aeson = super.aeson_2_0_1_0;
     } // displays self);
+    overrides = nixpkgs.lib.composeExtensions (old.overrides or (_: _: {})) ihaskellOverlay;
   });
   # statically linking against haskell libs reduces closure size at the expense
   # of startup/reload time, so we make it configurable
@@ -94,7 +95,7 @@ let
     passthru = {
       inherit haskellPackages;
       inherit ihaskellExe;
-      inherit ihaskellEnv;
+      inherit ihaskellOverlay;
       inherit ihaskellLabextension;
       inherit jupyterlab;
       inherit ihaskellGhcLibFunc;
