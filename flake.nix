@@ -51,7 +51,7 @@
               pythonDevEnv
               self.inputs.hls.packages.${system}."haskell-language-server-${compilerVersion}"
             ]);
-        in (myModifier myIHaskell).envFunc {withHoogle=true;};
+        in (myModifier myIHaskell).envFunc {withHoogle=false;};
 
 
       mkPackage = hsPkgs:
@@ -64,7 +64,7 @@
           returnShellEnv = false;
           modifier = pkgs.haskell.lib.dontCheck;
           overrides = (mkEnv hsPkgs).ihaskellOverlay ;
-          withHoogle = true;
+          withHoogle = false;
         };
 
     in {

@@ -1,8 +1,8 @@
 let
   # https://github.com/NixOS/nixpkgs/pull/144758
   nixpkgs-src = builtins.fetchTarball {
-    url = "https://github.com/NixOS/nixpkgs/tarball/c473cc8714710179df205b153f4e9fa007107ff9";
-    sha256 = "0q7rnlp1djxc9ikj89c0ifzihl4wfvri3q1bvi75d2wrz844b4lq";
+    url = "https://github.com/NixOS/nixpkgs/tarball/5bb20f9dc70e9ee16e21cc404b6508654931ce41";
+    sha256 = "0q7rnlp1djxc9ikj89c0ifzihl4wfvri3q1bvi75d0wrz844b4lq";
   };
 in
 
@@ -24,7 +24,7 @@ let
       (display: { name = "ihaskell-${display}"; value = self.callCabal2nix display "${ihaskell-src}/ihaskell-display/ihaskell-${display}" {}; })
       [ "aeson" "blaze" "charts" "diagrams" "gnuplot" "graphviz" "hatex" "juicypixels" "magic" "plot" "rlangqq" "static-canvas" "widgets" ]);
 
-    ihaskellOverlay = nixpkgs.lib.composeExtensions (old.overrides or (_: _: {})) (self: super: {
+  ihaskellOverlay = (self: super: {
       ihaskell          = (nixpkgs.haskell.lib.overrideCabal (
                           self.callCabal2nix "ihaskell" ihaskell-src {}) (_drv: {
         preCheck = ''
@@ -32,15 +32,16 @@ let
           export PATH=$PWD/dist/build/ihaskell:$PATH
           export GHC_PACKAGE_PATH=$PWD/dist/package.conf.inplace/:$GHC_PACKAGE_PATH
         '';
-        configureFlags = (old.configureFlags or []) ++ [ "-f" "-use-hlint" ];
+        configureFlags = (_drv.configureFlags or []) ++ [ "-f" "-use-hlint" ];
       })).overrideScope (self: super: {
         hlint = null;
       });
       ghc-parser        = self.callCabal2nix "ghc-parser" ./ghc-parser {};
       ipython-kernel    = self.callCabal2nix "ipython-kernel" ./ipython-kernel {};
 
-      aeson = super.aeson_2_0_1_0;
+      aeson = super.aeson_2_0_3_0;
     } // displays self);
+  haskellPackages = nixpkgs.haskell.packages."${compiler}".override (old: {
     overrides = nixpkgs.lib.composeExtensions (old.overrides or (_: _: {})) ihaskellOverlay;
   });
   # statically linking against haskell libs reduces closure size at the expense
