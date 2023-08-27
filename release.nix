@@ -12,13 +12,6 @@
 }:
 
 let
-  # ihaskell-src = pkgs.nix-gitignore.gitignoreSource
-  #   [ "**/*.ipynb" "**/*.nix" "**/*.yaml" "**/*.yml" "**/\.*" "/Dockerfile" "/README.md" "/cabal.project" "/images" "/notebooks" "/requirements.txt" ]
-  #   ./.;
-  # displays = self: builtins.listToAttrs (
-  #   map
-  #     (display: { name = "ihaskell-${display}"; value = self.callCabal2nix display "${ihaskell-src}/ihaskell-display/ihaskell-${display}" {}; })
-  #     [ "aeson" "blaze" "charts" "diagrams" "gnuplot" "graphviz" "hatex" "juicypixels" "magic" "plot" "rlangqq" "static-canvas" "widgets" ]);
   haskellPackages = pkgs.haskell.packages."${compiler}".override (old: {
     overrides = pkgs.lib.composeExtensions (old.overrides or (_: _: {})) ihaskellOverlay;
   });

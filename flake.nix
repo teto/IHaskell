@@ -58,20 +58,12 @@
         let 
           exe = (mkEnv hsPkgs (_:[])).ihaskellExe;
         in 
-        pkgs.runCommand "ihaskell-wrapper"
-          {
-            nativeBuildInputs = [ pkgs.makeWrapper ];
-          } ''
+        pkgs.runCommand "ihaskell-wrapper" 
+          { nativeBuildInputs = [ pkgs.makeWrapper ]; } ''
           mkdir -p $out/bin
           makeWrapper ${exe}/bin/ihaskell $out/bin/ihaskell --prefix PATH : ${pkgs.lib.makeBinPath [ pkgs.which ]}
+          '';
 
-        '';
-
-          # exe.overrideAttrs(oa: {
-          #   nativeBuildInputs = oa.nativeBuildInputs ++ [ pkgs.makeWrapper ];
-          #   postFixup = ''
-          #   '';
-          # });
 
       ghcDefault = ghc96;
       # ghc92 = pkgs.ihaskellPackagesGhc92;
@@ -134,7 +126,7 @@
               # TODO move to devShell ?
             (pkgs.lib.nameValuePair "ihaskell-${majorVersion}-dev" (mkDevShell hsPkgs))
             (pkgs.lib.nameValuePair "ihaskell-${majorVersion}" ( mkExe hsPkgs))
-            (pkgs.lib.nameValuePair "ihaskell-${majorVersion}-env" (mkEnv hsPkgs))
+            (pkgs.lib.nameValuePair "ihaskell-${majorVersion}-env" (mkEnv hsPkgs (_:[])))
 
           ] ++ (map (name: pkgs.lib.nameValuePair (name) hsPkgs."ihaskell-${name}") ihaskellPackageNames)
           ;

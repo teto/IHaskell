@@ -34,14 +34,6 @@ hfinal: hprev: let
     #   libraryToolDepends = (drv.libraryToolDepends or []) ++ [self.buildHaskellPackages.c2hs];
     # }) super.libsodium;
     ghc-syntax-highlighter = 
-      # let
-      # src = nixpkgs.fetchFromGitHub {
-      #   owner = "mrkkrp";
-      #   repo = "ghc-syntax-highlighter";
-      #   rev = "71ff751eaa6034d4aef254d6bc5a8be4f6595344";
-      #   sha256 = "14yahxi4pnjbvcd9r843kn7b36jsjaixd99jswsrh9n8xd59c2f1";
-      # };
-      # in
         hfinal.callCabal2nix "ghc-syntax-highlighter" inputs.ghc-syntax-highlighter {};
 
     zeromq4-haskell = addPkgconfigDepend hprev.zeromq4-haskell libsodium;
